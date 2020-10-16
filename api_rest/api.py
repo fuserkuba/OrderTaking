@@ -15,6 +15,16 @@ resource_fields = {
 
 class PredictToTakeOrder(Resource):
 
+    def get_order_parser(self):
+        parser = reqparse.RequestParser(bundle_errors=True)
+        parser.add_argument('order_id', type=str, help='Order ID')
+        parser.add_argument('store_id', type=str, help='Store ID of the order')
+        parser.add_argument('to_user_distance', type=float, help='Distance (km) between store and user location')
+        parser.add_argument('to_user_elevation', type=float, help='Difference (m) between the store and user altitude')
+        parser.add_argument('total_earning', type=float, help='Courier earning by delivering the order')
+        parser.add_argument('created_at', type=str, help='Timestamp of order creation')
+        return parser
+
     def delete(self):
         orders.clear()
         return "All orders predictions were deleted"
@@ -24,26 +34,30 @@ class PredictToTakeOrder(Resource):
 
     @marshal_with(resource_fields)
     def post(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('order_id', type=str, help='Order ID')
-        parser.add_argument('store_id', type=str, help='Store ID of the order')
-        parser.add_argument('to_user_distance', type=float, help='Distance (km) between store and user location')
-        parser.add_argument('to_user_elevation', type=float, help='Difference (m) between the store and user altitude')
-        parser.add_argument('total_earning', type=float, help='Courier earning by delivering the order')
-        parser.add_argument('created_at', type=str, help='Timestamp of order creation')
-
         # strict=True ensures that an error is thrown if the request includes arguments your parser does not define
-        args = parser.parse_args(strict=True)
+        args = self.get_order_parser().parse_args(strict=True)
+        # process order
+        return self.process(args)
 
-        prediction = 1
-        confidence = 0.9
+    @marshal_with(resource_fields)
+    def put(self):
+        root_parser = reqparse.RequestParser()
+        root_parser.add_argument('orders', action='append', type=dict)
+        root_args = root_parser.parse_args(strict=True)
+        processed = [self.process(order) for order in root_args['orders']]
+        return processed
 
-        args['prediction'] = prediction
-        args['confidence'] = confidence
+    def process(self, order_dict):
+        prediction, confidence = self.predict(order_dict)
 
-        orders[args['order_id']] = args
+        order_dict['prediction'] = prediction
+        order_dict['confidence'] = confidence
 
-        return args
+        orders[order_dict['order_id']] = order_dict
+        return order_dict
+
+    def predict(self, order):
+            return 1, 0.9
 
 
 api.add_resource(PredictToTakeOrder, '/toTake')
