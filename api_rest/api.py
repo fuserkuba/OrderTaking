@@ -1,5 +1,5 @@
 from flask import Flask, request
-from flask_restful import Api, Resource, reqparse, fields, marshal_with
+from flask_restful import Api, Resource, reqparse, fields, marshal_with, abort
 
 app = Flask(__name__)
 api = Api(app)
@@ -60,7 +60,17 @@ class PredictToTakeOrder(Resource):
             return 1, 0.9
 
 
+class ConsultToTakeOrder(Resource):
+
+    @marshal_with(resource_fields)
+    def get(self, order_id):
+        if order_id not in orders:
+            abort(404, message="Order {} doesn't exist".format(order_id))
+        return orders[order_id]
+
+
 api.add_resource(PredictToTakeOrder, '/toTake')
+api.add_resource(ConsultToTakeOrder, '/toTake/<order_id>')
 
 if __name__ == '__main__':
     app.run(debug=True)
