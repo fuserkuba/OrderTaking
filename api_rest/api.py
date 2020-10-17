@@ -17,12 +17,12 @@ class PredictToTakeOrder(Resource):
 
     def get_order_parser(self):
         parser = reqparse.RequestParser(bundle_errors=True)
-        parser.add_argument('order_id', type=str, help='Order ID')
-        parser.add_argument('store_id', type=str, help='Store ID of the order')
-        parser.add_argument('to_user_distance', type=float, help='Distance (km) between store and user location')
-        parser.add_argument('to_user_elevation', type=float, help='Difference (m) between the store and user altitude')
-        parser.add_argument('total_earning', type=float, help='Courier earning by delivering the order')
-        parser.add_argument('created_at', type=str, help='Timestamp of order creation')
+        parser.add_argument('order_id', type=str, help='Order ID', required=True)
+        parser.add_argument('store_id', type=str, help='Store ID of the order', required=True)
+        parser.add_argument('to_user_distance', type=float, help='Distance (km) between store and user location', required=True)
+        parser.add_argument('to_user_elevation', type=float, help='Difference (m) between the store and user altitude', required=True)
+        parser.add_argument('total_earning', type=float, help='Courier earning by delivering the order', required=True)
+        parser.add_argument('created_at', type=str, help='Timestamp of order creation', required=True)
         return parser
 
     def delete(self):
@@ -44,7 +44,13 @@ class PredictToTakeOrder(Resource):
         root_parser = reqparse.RequestParser()
         root_parser.add_argument('orders', action='append', type=dict)
         root_args = root_parser.parse_args(strict=True)
-        processed = [self.process(order) for order in root_args['orders']]
+        processed = []
+        for order in root_args['orders']:
+            fake_request = FakeRequest()
+            setattr(fake_request, 'json', order)
+            setattr(fake_request, 'unparsed_arguments', {})
+            args = self.get_order_parser().parse_args(req=fake_request, strict=True)
+            processed.append(self.process(args))
         return processed
 
     def process(self, order_dict):
@@ -58,6 +64,11 @@ class PredictToTakeOrder(Resource):
 
     def predict(self, order):
             return 1, 0.9
+
+
+class FakeRequest(dict):
+    def __setattr__(self, name, value):
+        object.__setattr__(self, name, value)
 
 
 class ConsultToTakeOrder(Resource):
