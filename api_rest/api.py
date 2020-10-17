@@ -1,10 +1,15 @@
-from flask import Flask, request
+from flask import Flask, Response
+from flask_mongoengine import MongoEngine
 from flask_restful import Api, Resource, reqparse, fields, marshal_with, abort
+from models import Order
 
 app = Flask(__name__)
-api = Api(app)
+app.config['MONGODB_SETTINGS'] = {
+    "db": "orders",
+}
+db = MongoEngine(app)
 
-orders = {}
+api = Api(app)
 
 resource_fields = {
     'order_id':   fields.String,
@@ -26,11 +31,12 @@ class PredictToTakeOrder(Resource):
         return parser
 
     def delete(self):
-        orders.clear()
+        Order.objects.delete()
         return "All orders predictions were deleted"
 
     def get(self):
-        return orders
+        orders=Order.objects.to_json()
+        return Response(orders, mimetype="application/json", status=200)
 
     @marshal_with(resource_fields)
     def post(self):
@@ -59,8 +65,11 @@ class PredictToTakeOrder(Resource):
         order_dict['prediction'] = prediction
         order_dict['confidence'] = confidence
 
-        orders[order_dict['order_id']] = order_dict
-        return order_dict
+        print(order_dict)
+        order = Order(**order_dict)
+        order.save()
+
+        return order
 
     def predict(self, order):
             return 1, 0.9
@@ -75,10 +84,10 @@ class ConsultToTakeOrder(Resource):
 
     @marshal_with(resource_fields)
     def get(self, order_id):
-        if order_id not in orders:
+        order = Order.objects(order_id=order_id).first()
+        if order is None:
             abort(404, message="Order {} doesn't exist".format(order_id))
-        return orders[order_id]
-
+        return order
 
 api.add_resource(PredictToTakeOrder, '/toTake')
 api.add_resource(ConsultToTakeOrder, '/toTake/<order_id>')
