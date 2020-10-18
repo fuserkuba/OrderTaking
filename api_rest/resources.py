@@ -67,7 +67,7 @@ class PredictToTakeOrder(Resource):
         return processed
 
     def process(self, order_dict):
-        prediction, confidence = self.predict(order_dict)
+        prediction, confidence = self.classifier.predict(order_dict)
 
         order_dict['prediction'] = prediction
         order_dict['confidence'] = confidence
@@ -77,9 +77,6 @@ class PredictToTakeOrder(Resource):
         order.save()
 
         return order
-
-    def predict(self, order):
-        return self.classifier.predict(order), 0.9
 
 
 class FakeRequest(dict):
