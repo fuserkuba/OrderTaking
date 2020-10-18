@@ -1,5 +1,6 @@
 from flask_restful import Resource, reqparse, fields, marshal_with, abort
 from models import Order
+from mlearning import Classifier
 
 prediction_fields = {
     'order_id': fields.String,
@@ -20,6 +21,8 @@ order_fields = {
 
 
 class PredictToTakeOrder(Resource):
+
+    classifier = Classifier()
 
     def get_order_parser(self):
         parser = reqparse.RequestParser(bundle_errors=True)
@@ -76,7 +79,7 @@ class PredictToTakeOrder(Resource):
         return order
 
     def predict(self, order):
-        return 1, 0.9
+        return self.classifier.predict(order), 0.9
 
 
 class FakeRequest(dict):
