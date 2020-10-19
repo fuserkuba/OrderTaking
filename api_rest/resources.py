@@ -68,7 +68,6 @@ class PredictToTakeOrder(Resource):
 
     def process(self, order_dict):
         prediction, confidence = self.classifier.predict(order_dict)
-
         order_dict['prediction'] = prediction
         order_dict['confidence'] = confidence
 
