@@ -42,13 +42,14 @@ df['working_time']=(df.created_at - pd.to_timedelta(8,unit='H')).dt.hour*60+df.c
 min_qt=0.01
 max_qt=0.99
 
-# filter extreme values
-df_ready = df[df.total_earning.gt(df.total_earning.quantile(min_qt))
+# filter extreme values on mayority class
+df_ready = df[ df.taken.eq(0) | 
+        ( df.total_earning.gt(df.total_earning.quantile(min_qt))
         & df.total_earning.lt(df.total_earning.quantile(max_qt))
         & df.to_user_distance.gt(df.to_user_distance.quantile(min_qt))
         & df.to_user_distance.lt(df.to_user_distance.quantile(max_qt))
         & df.to_user_elevation.gt(df.to_user_elevation.quantile(min_qt))
-        & df.to_user_elevation.lt(df.to_user_elevation.quantile(max_qt))]
+        & df.to_user_elevation.lt(df.to_user_elevation.quantile(max_qt)))]
 
 print("\nFiltered dataset: {}".format(df_ready.shape))
 print('Filtered dataset classes %s' % Counter(df_ready.taken))
@@ -56,7 +57,7 @@ display(df_ready.describe())
 
 """# TRAINING"""
 
-features = ['to_user_distance','to_user_elevation','total_earning','weekday','day','hour','working_time']
+features = ['to_user_distance','to_user_elevation','total_earning','weekday','working_time']
 target = ['taken']
 
 X = df_ready[features].values
@@ -77,52 +78,47 @@ print("Test set X: {}  y: {}".format(X_test.shape,y_test.shape))
 print('Training dataset shape %s' % Counter(y_train))
 print('Test dataset shape %s' % Counter(y_test))
 
-from imblearn.combine import SMOTEENN # Combine over- and under-sampling using SMOTE and Edited Nearest Neighbours.
+"""### RESAMPLING"""
+
 from imblearn.over_sampling import SMOTE # Class to perform over-sampling using SMOTE.
 from imblearn.under_sampling import RandomUnderSampler # Under-sample the majority class(es) by randomly picking samples with or without replacement.
 from imblearn.pipeline import Pipeline
 
 
-#sme = SMOTEENN(random_state=42)
 # define pipeline
-over = SMOTE(sampling_strategy=0.2)
-under = RandomUnderSampler(sampling_strategy=0.5)
+over = SMOTE(sampling_strategy=0.6)
+under = RandomUnderSampler(sampling_strategy=0.8)
 steps = [('o', over), ('u', under)]
 pipeline = Pipeline(steps=steps)
 
 # transform the dataset
 X_res, y_res = pipeline.fit_resample(X_train, y_train)
 
-print('Resampled dataset shape %s' % Counter(y_train))
+print('Trained dataset shape %s' % Counter(y_train))
 print('Resampled dataset shape %s' % Counter(y_res))
 
 X_train = X_res
 y_train = y_res
 
 from sklearn.preprocessing import StandardScaler
-#
-from sklearn.pipeline import Pipeline
-#
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import RandomForestClassifier
-# import xgboost as xgb
 
-#classifier = KNeighborsClassifier(n_neighbors=3)
-classifier = RandomForestClassifier(criterion='gini',max_features='auto',n_jobs=-1)
-#classifier = xgb.XGBClassifier(objective='binary:logistic', n_estimators=10, seed=123)
+from sklearn.pipeline import Pipeline
+
+from sklearn.ensemble import RandomForestClassifier
+classifier = RandomForestClassifier(n_jobs=-1)
 
 steps = [('scaler', StandardScaler()),
          ('clf', classifier)]
 
 pipeline = Pipeline(steps)
 
-# parameters = {'clf__n_neighbors': (3,5,10)}
 parameters = {
+'clf__criterion': ['entropy'],
 'clf__max_depth': [100],
 'clf__max_features': [2],
-'clf__min_samples_leaf': [3],
-'clf__min_samples_split': [8],
-'clf__n_estimators': [400],
+'clf__min_samples_leaf': [2],
+'clf__min_samples_split': [4],
+'clf__n_estimators': [150],
 'clf__class_weight': ['balanced_subsample']
 }
 
@@ -131,10 +127,9 @@ display(parameters)
 """## CROSS VALIDATION"""
 
 from sklearn.model_selection import GridSearchCV
-from pprint import pprint
 from time import time
 
-grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1, verbose=1, scoring='roc_auc')
+grid_search = GridSearchCV(pipeline, parameters, n_jobs=2, verbose=1, scoring='balanced_accuracy', cv=2)
 
 print("Performing grid search...")
 print("pipeline:", [name for name, _ in pipeline.steps])
@@ -159,15 +154,20 @@ print("BEST SCORE : {}".format(grid_search.best_score_))
 
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
+from sklearn.metrics import recall_score
+from sklearn.metrics import f1_score
+from sklearn.metrics import balanced_accuracy_score
 from sklearn.metrics import accuracy_score
-from sklearn.metrics import roc_auc_score
 
 y_pred = model.predict(X_test)
 
 print("confusion matrix:")
 print(confusion_matrix(y_test, y_pred))
 print(classification_report(y_test, y_pred))
-print("ROC_AUC: %0.2f" % roc_auc_score(y_test, y_pred))
+print("Recall score: %0.2f" % recall_score(y_test, y_pred, average='weighted'))
+print("F1 score: %0.2f" % f1_score(y_test, y_pred, average='weighted'))
+#The balanced accuracy in binary and multiclass classification problems to deal with imbalanced datasets. It is defined as the average of recall obtained on each class.
+print("Balanced accuracy score: %0.2f" % balanced_accuracy_score(y_test, y_pred))
 print("Accuracy: %0.2f" % accuracy_score(y_test, y_pred))
 
 """# SAVE MODEL"""

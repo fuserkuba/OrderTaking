@@ -10,15 +10,11 @@ class Classifier():
     def predict(self, order):
         created = dateutil.parser.parse(order.created_at)
         week_day = created.weekday()
-        day = created.day
-        hour = created.hour
         working_time = (created - timedelta(hours=8)).hour * 60 + created.minute
         x = np.array([order.to_user_distance,
                       order.to_user_elevation,
                       order.total_earning,
                       week_day,
-                      day,
-                      hour,
                       working_time
                       ])\
             .reshape(1, -1)
