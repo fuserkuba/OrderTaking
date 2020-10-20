@@ -6,6 +6,7 @@ from resources import Status, PredictToTakeOrder, ConsultToTakeOrder
 app = Flask(__name__)
 app.config['MONGODB_SETTINGS'] = {
     "db": "orders",
+    'host': 'mongodb'
 }
 db = MongoEngine(app)
 
