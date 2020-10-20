@@ -1,6 +1,18 @@
 from flask_restful import Resource, reqparse, fields, marshal_with, abort
 from models import Order
 from mlearning import Classifier
+import logging as logger
+
+
+class Status(Resource):
+    def get(self):
+        logger.debug("Get status")
+        status = {
+            "version": "1.0.0.0",
+            "owner": "fuserkuba",
+            "projectName": "OrderTaking"
+        }
+        return status, 200
 
 prediction_fields = {
     'order_id': fields.String,
