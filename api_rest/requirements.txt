@@ -1,0 +1,10 @@
+flask-restful
+flask-mongoengine
+joblib
+numpy
+python-dateutil
+sklearn
+pandas
+seaborn
+ipython
+imblearn
