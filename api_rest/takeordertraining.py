@@ -114,7 +114,7 @@ pipeline = Pipeline(steps)
 
 parameters = {
     'clf__criterion': ['entropy'],
-    'clf__max_depth': [200],
+    'clf__max_depth': [300],
     'clf__max_features': [2],
     'clf__min_samples_leaf': [2],
     'clf__min_samples_split': [4],
@@ -129,7 +129,7 @@ display(parameters)
 from sklearn.model_selection import GridSearchCV
 from time import time
 
-grid_search = GridSearchCV(pipeline, parameters, n_jobs=2, verbose=1, scoring='balanced_accuracy', cv=2)
+grid_search = GridSearchCV(pipeline, parameters, n_jobs=2, verbose=1, scoring='balanced_accuracy')
 
 print("Performing grid search...")
 print("pipeline:", [name for name, _ in pipeline.steps])
