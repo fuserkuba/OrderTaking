@@ -28,28 +28,28 @@ display(df.describe())
 print("Dataset: {}".format(df.shape))
 print('Dataset classes %s' % Counter(df.taken))
 
-df.total_earning.replace(0,np.nan, inplace=True)
-df.to_user_distance.replace(0,np.nan, inplace=True)
+df.total_earning.replace(0, np.nan, inplace=True)
+df.to_user_distance.replace(0, np.nan, inplace=True)
 df.dropna(inplace=True)
 
-df['month']=df.created_at.dt.month
+df['month'] = df.created_at.dt.month
 # Monday is 0 and Sunday is 6
-df['weekday']=df.created_at.dt.weekday
-df['day']=df.created_at.dt.day
-df['hour']=df.created_at.dt.hour
-df['working_time']=(df.created_at - pd.to_timedelta(8,unit='H')).dt.hour*60+df.created_at.dt.minute
+df['weekday'] = df.created_at.dt.weekday.apply(str)
+df['day'] = df.created_at.dt.day
+df['hour'] = df.created_at.dt.hour
+df['working_time'] = (df.created_at - pd.to_timedelta(8, unit='H')).dt.hour * 60 + df.created_at.dt.minute
 
-min_qt=0.01
-max_qt=0.99
+min_qt = 0.01
+max_qt = 0.99
 
 # filter extreme values on mayority class
-df_ready = df[ df.taken.eq(0) | 
-        ( df.total_earning.gt(df.total_earning.quantile(min_qt))
-        & df.total_earning.lt(df.total_earning.quantile(max_qt))
-        & df.to_user_distance.gt(df.to_user_distance.quantile(min_qt))
-        & df.to_user_distance.lt(df.to_user_distance.quantile(max_qt))
-        & df.to_user_elevation.gt(df.to_user_elevation.quantile(min_qt))
-        & df.to_user_elevation.lt(df.to_user_elevation.quantile(max_qt)))]
+df_ready = df[df.taken.eq(0) |
+              (df.total_earning.gt(df.total_earning.quantile(min_qt))
+               & df.total_earning.lt(df.total_earning.quantile(max_qt))
+               & df.to_user_distance.gt(df.to_user_distance.quantile(min_qt))
+               & df.to_user_distance.lt(df.to_user_distance.quantile(max_qt))
+               & df.to_user_elevation.gt(df.to_user_elevation.quantile(min_qt))
+               & df.to_user_elevation.lt(df.to_user_elevation.quantile(max_qt)))]
 
 print("\nFiltered dataset: {}".format(df_ready.shape))
 print('Filtered dataset classes %s' % Counter(df_ready.taken))
@@ -57,14 +57,14 @@ display(df_ready.describe())
 
 """# TRAINING"""
 
-features = ['to_user_distance','to_user_elevation','total_earning','weekday','working_time']
+features = ['to_user_distance', 'to_user_elevation', 'total_earning', 'weekday', 'working_time']
 target = ['taken']
 
 X = df_ready[features].values
 y = df_ready[target].values.ravel()
 
-display(X[:5],X.shape)
-display(y[:5],y.shape)
+display(X[:5], X.shape)
+display(y[:5], y.shape)
 
 """## PREPARE TRAIN AND TEST DATA"""
 
@@ -72,18 +72,17 @@ from sklearn.model_selection import train_test_split
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=21, stratify=y)
 
-print("Training set X: {}  y: {}".format(X_train.shape,y_train.shape))
-print("Test set X: {}  y: {}".format(X_test.shape,y_test.shape))
+print("Training set X: {}  y: {}".format(X_train.shape, y_train.shape))
+print("Test set X: {}  y: {}".format(X_test.shape, y_test.shape))
 
 print('Training dataset shape %s' % Counter(y_train))
 print('Test dataset shape %s' % Counter(y_test))
 
 """### RESAMPLING"""
 
-from imblearn.over_sampling import SMOTE # Class to perform over-sampling using SMOTE.
+from imblearn.over_sampling import SMOTE  # Class to perform over-sampling using SMOTE.
 from imblearn.under_sampling import RandomUnderSampler # Under-sample the majority class(es) by randomly picking samples with or without replacement.
 from imblearn.pipeline import Pipeline
-
 
 # define pipeline
 over = SMOTE(sampling_strategy=0.6)
@@ -105,6 +104,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 
 from sklearn.ensemble import RandomForestClassifier
+
 classifier = RandomForestClassifier(n_jobs=-1)
 
 steps = [('scaler', StandardScaler()),
@@ -113,13 +113,13 @@ steps = [('scaler', StandardScaler()),
 pipeline = Pipeline(steps)
 
 parameters = {
-'clf__criterion': ['entropy'],
-'clf__max_depth': [100],
-'clf__max_features': [2],
-'clf__min_samples_leaf': [2],
-'clf__min_samples_split': [4],
-'clf__n_estimators': [150],
-'clf__class_weight': ['balanced_subsample']
+    'clf__criterion': ['entropy'],
+    'clf__max_depth': [200],
+    'clf__max_features': [2],
+    'clf__min_samples_leaf': [2],
+    'clf__min_samples_split': [4],
+    'clf__n_estimators': [300],
+    'clf__class_weight': ['balanced_subsample']
 }
 
 display(parameters)
@@ -141,9 +141,9 @@ print("Best score: %0.3f" % grid_search.best_score_)
 print("Best parameters set:")
 best_parameters = grid_search.best_estimator_.get_params()
 for param_name in sorted(parameters.keys()):
-  print("\t%s: %r" % (param_name, best_parameters[param_name]))
+    print("\t%s: %r" % (param_name, best_parameters[param_name]))
 
-model=grid_search.best_estimator_
+model = grid_search.best_estimator_
 
 print("\nBEST MODEL :")
 display(model)
@@ -166,7 +166,7 @@ print(confusion_matrix(y_test, y_pred))
 print(classification_report(y_test, y_pred))
 print("Recall score: %0.2f" % recall_score(y_test, y_pred, average='weighted'))
 print("F1 score: %0.2f" % f1_score(y_test, y_pred, average='weighted'))
-#The balanced accuracy in binary and multiclass classification problems to deal with imbalanced datasets. It is defined as the average of recall obtained on each class.
+# The balanced accuracy in binary and multiclass classification problems to deal with imbalanced datasets. It is defined as the average of recall obtained on each class.
 print("Balanced accuracy score: %0.2f" % balanced_accuracy_score(y_test, y_pred))
 print("Accuracy: %0.2f" % accuracy_score(y_test, y_pred))
 
@@ -174,6 +174,6 @@ print("Accuracy: %0.2f" % accuracy_score(y_test, y_pred))
 
 import joblib
 
-filename='model.joblib'
+filename = 'model.joblib'
 
 joblib.dump(model, filename)
