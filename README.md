@@ -1,20 +1,25 @@
-# OrderTaking
+# Order Taking
 
-1. Documented requests and response of the API
-2. The API should be able to make an estimation one by one or in batch
-3. Store locally in a DB each estimation to future analisis.
-4. Coverage of test of at least the 75% (Optional)
-5. docker-compose to run the project locally
+1. After cloning this repository, you can use [docker-compose](deployments/docker-compose.yml) or execute:
 
-## Dependencies:
+```sh
+make install
+```
 
-### Python 2
-* sudo apt install python-pip
-* pip install flask-restful flask-mongoengine joblib
-* pip install joblib numpy sklearn pandas seaborn ipython imblearn
+Then simply visit [Order Taking][App]!
 
-### Python 3
-* sudo apt install python3-pip
-* pip3 install flask-restful flask-mongoengine
-* pip3 install joblib numpy sklearn pandas seaborn ipython imblearn
+2. Documented requests and response of the API with [swagger3](http://swagger.io/) support according to the [openapi 3.0.0 specification](https://swagger.io/specification/) is available on [Order Taking][App]
+
+3. The API is able to make an estimation [one by one](http://localhost:5000/#/List%20%5B%20%22predict%22%20%5D/post_toTake) or in [batch](http://localhost:5000/#/List%20%5B%20%22predict%22%20%5D/put_toTake)
+
+4. The app stores locally in a mongo DB each estimation to future analysis.
+
+
+## Requirements
+
+To build this project you will need [Docker][Docker Install] and [Docker Compose][Docker Compose Install].
+
+[Docker Install]:  https://docs.docker.com/install/
+[Docker Compose Install]: https://docs.docker.com/compose/install/
+[App]: http://127.0.0.1:5000
 
