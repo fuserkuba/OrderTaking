@@ -1,5 +1,6 @@
 flask-restful
 flask-mongoengine
+flask-restful-swagger-3
 joblib
 numpy
 python-dateutil
