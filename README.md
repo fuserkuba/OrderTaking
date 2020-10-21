@@ -14,6 +14,8 @@ Then simply visit [Order Taking][App]!
 
 4. The app stores locally in a mongo DB each estimation to future analysis.
 
+5. The Jupyter Notebook used for analysis and prediction is available on [training](training/TakeOrderTraining.ipynb)
+
 
 ## Requirements
 
